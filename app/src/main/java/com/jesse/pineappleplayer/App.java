@@ -7,10 +7,10 @@ import android.app.Application;
  */
 
 public class App extends Application {
-    static {
-        System.loadLibrary("jni_interface");
-        System.loadLibrary("ffmpeg");
-    }
+//    static {
+//        System.loadLibrary("jni_interface");
+//        System.loadLibrary("ffmpeg");
+//    }
 
 
 }
