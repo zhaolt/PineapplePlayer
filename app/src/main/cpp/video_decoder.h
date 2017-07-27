@@ -7,6 +7,6 @@
 
 #include <stdint.h>
 
-int init_dec(int mimeType);
+int init_avc_dec();
 int decodeVideoData(uint8_t* srcData, int dataLen, uint8_t* outData);
 #endif //PINEAPPLEPLAYER_VIDEO_DECODER_H_H

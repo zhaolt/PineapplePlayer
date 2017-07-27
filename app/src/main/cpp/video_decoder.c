@@ -23,19 +23,19 @@ int initFlag = 0;
 typedef struct _VideoDec {
     AVCodecContext *pCodecCtx;
     AVFrame *pFrame;
-    AVPacket *packet;
+    AVPacket packet;
     struct SwsContext *pSwsCtx;
     AVCodec *pCodec;
 
 } VideoDec;
 VideoDec *d = NULL;
 
-int init_dec(int mimeType)
+int init_avc_dec()
 {
     if (initFlag == 1)
     {
         sws_freeContext(d->pSwsCtx);
-        av_free_packet(d->packet);
+        av_free_packet(&(d->packet));
         av_free(d->pFrame);
         avcodec_close(d->pCodecCtx);
         av_free(d->pCodecCtx);
@@ -45,11 +45,8 @@ int init_dec(int mimeType)
     d->pSwsCtx = NULL;
     avcodec_register_all();
     d->pFrame = av_frame_alloc();
-    av_init_packet(d->packet);
-    if (mimeType == AV_CODEC_ID_H264)
-    {
-        d->pCodec = avcodec_find_decoder(AV_CODEC_ID_H264);
-    }
+    av_init_packet(&(d->packet));
+    d->pCodec = avcodec_find_decoder(AV_CODEC_ID_H264);
     if (NULL != d->pCodec)
     {
         d->pCodecCtx = avcodec_alloc_context3(d->pCodec);
@@ -83,9 +80,9 @@ int decodeVideoData(uint8_t* srcData, int dataLen, uint8_t* outData)
     {
         return -1;
     }
-    d->packet->data = srcData;
-    d->packet->size = dataLen;
-    ret = avcodec_decode_video2(d->pCodecCtx, d->pFrame, &got_picture, d->packet);
+    d->packet.data = srcData;
+    d->packet.size = dataLen;
+    ret = avcodec_decode_video2(d->pCodecCtx, d->pFrame, &got_picture, &(d->packet));
     if (got_picture)
     {
         pgm_save2(d->pFrame->data[0],

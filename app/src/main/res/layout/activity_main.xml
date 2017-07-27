@@ -6,9 +6,11 @@
     android:layout_height="match_parent"
     tools:context="com.jesse.pineappleplayer.MainActivity">
 
-    <TextureView
-        android:id="@+id/playback_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+    <ImageButton
+        android:id="@+id/bt_play"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="play"
+        android:src="@drawable/selector_play"/>
 
 </FrameLayout>

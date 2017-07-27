@@ -12,11 +12,12 @@ public class FFmpegInterface {
         public static final FFmpegInterface INSTANCE = new FFmpegInterface();
     }
 
-    public FFmpegInterface getInstance() {
+
+    public static FFmpegInterface getInstance() {
         return SingleTon.INSTANCE;
     }
 
-    public native int initVideoDecoder();
-    public native int decodeVideoData(byte[] srcData, byte[] outData);
+    public native int initH264Decoder();
+    public native int decodeh264Data(byte[] srcData, int dataLen, byte[] outData);
 
 }
