@@ -5,7 +5,11 @@ import android.content.Context;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.net.Uri;
+import android.util.Log;
 import android.view.Surface;
+
+import com.jesse.pineappleplayer.display.GLDisplayView;
+import com.jesse.pineappleplayer.ffmpeg.FFmpegInterface;
 
 import java.io.IOException;
 
@@ -94,6 +98,34 @@ public class MediaParser {
             mTimeAnimator.start();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void decodeFileByFFmpeg(String url, final GLDisplayView displayView, String className) {
+        FFmpegInterface.getInstance().addOnFrameDecodeListener(className, new FFmpegInterface.OnFrameDecodeListener() {
+            @Override
+            public void onFrameDecode(byte[] data) {
+                displayView.pushYUVData(data);
+            }
+
+            @Override
+            public void updateSize(int w, int h) {
+                displayView.updateSize(w, h);
+            }
+        });
+        int result = FFmpegInterface.getInstance().decodeFile(url);
+        switch (result) {
+            case -1:
+                Log.e(TAG, "decode error");
+                FFmpegInterface.getInstance().deleteFrameDecodeListener(className);
+                break;
+            case 2:
+                Log.i(TAG, "decode end");
+                FFmpegInterface.getInstance().deleteFrameDecodeListener(className);
+                break;
+            default:
+                Log.i(TAG, "decoding...");
+                break;
         }
     }
 

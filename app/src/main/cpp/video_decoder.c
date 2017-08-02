@@ -106,9 +106,8 @@ int decodeVideoData(uint8_t* srcData, int dataLen, uint8_t* outData)
 }
 
 
-int decodeFile(JNIEnv* env, jstring url, jbyteArray outData) {
+int decodeFile(JNIEnv* env, jstring url) {
     int i, videoIndex;
-    jbyte *outBuffer = (*env)->GetByteArrayElements(env, outData, 0);
     int ret, got_picture;
     int frame_cnt;
 
@@ -153,9 +152,14 @@ int decodeFile(JNIEnv* env, jstring url, jbyteArray outData) {
         return -1;
     }
 
+    // int size = w * h + (w * h / 2); yuv420
+    int dataLen = pDec->pCodecCtx->width * pDec->pCodecCtx->height +
+                  (pDec->pCodecCtx->width * pDec->pCodecCtx->height / 2);
+    updateSize2Java(pDec->pCodecCtx->width, pDec->pCodecCtx->height, env);
+    uint8_t* deData = malloc(dataLen);
     pDec->pFrame = av_frame_alloc();
     pDec->pFrameYUV = av_frame_alloc();
-    av_image_fill_arrays(pDec->pFrameYUV->data, pDec->pFrameYUV->linesize, outBuffer,
+    av_image_fill_arrays(pDec->pFrameYUV->data, pDec->pFrameYUV->linesize, deData,
                          AV_PIX_FMT_YUV420P, pDec->pCodecCtx->width, pDec->pCodecCtx->height, 1);
 
     av_init_packet(&(d->packet));
@@ -190,19 +194,18 @@ int decodeFile(JNIEnv* env, jstring url, jbyteArray outData) {
                 char pictype_str[10]={0};
                 pgm_save2(pDec->pFrame->data[0],
                           pDec->pFrame->linesize[0], pDec->pFrame->width, pDec->pFrame->height,
-                          outBuffer);
+                          deData);
                 pgm_save2(pDec->pFrame->data[1],
                           pDec->pFrame->linesize[1],
                           pDec->pFrame->width/2,
                           pDec->pFrame->height/2,
-                          outBuffer + pDec->pFrame->width * pDec->pFrame->height);
+                          deData + pDec->pFrame->width * pDec->pFrame->height);
                 pgm_save2(pDec->pFrame->data[2],
                           pDec->pFrame->linesize[2],
                           pDec->pFrame->width/2,
                           pDec->pFrame->height/2,
-                          outBuffer + pDec->pFrame->width * pDec->pFrame->height * 5 / 4);
-                (*env)->ReleaseByteArrayElements(env, outData, outBuffer, 0);
-                callJava(outData, env);
+                          deData + pDec->pFrame->width * pDec->pFrame->height * 5 / 4);
+                sendData2Java(deData, dataLen, env);
                 switch(pDec->pFrame->pict_type){
                     case AV_PICTURE_TYPE_I:sprintf(pictype_str,"I");break;
                     case AV_PICTURE_TYPE_P:sprintf(pictype_str,"P");break;
@@ -214,16 +217,24 @@ int decodeFile(JNIEnv* env, jstring url, jbyteArray outData) {
             }
         }
     }
+    return 2;
 }
 
-void callJava(jbyteArray outData, JNIEnv *env)
+void sendData2Java(uint8_t* deData, int dataLen, JNIEnv *env)
 {
-    jclass jclazz = (*env)->FindClass(env, "com/jesse/ffplayer/ffmpeg/JNIffmpegInterface");
+    jclass jclazz = (*env)->FindClass(env, "com/jesse/pineappleplayer/ffmpeg/JNIffmpegInterface");
     jmethodID jmethodid = (*env)->GetMethodID(env, jclazz, "sendData2Java", "([B)V");
     jobject jobj = (*env)->AllocObject(env, jclazz);
-    /**
-     * (*env)->NewByteArray
-     */
-    // TODO 创建java的byte数组 把解码数据装进去
-    (*env)->CallByteMethod(env, jobj, jmethodid, outData);
+    jbyte* jbyteDeData = (jbyte*) deData;
+    jbyteArray outData = (*env)->NewByteArray(env, dataLen);
+    (*env)->SetByteArrayRegion(env, outData, 0, dataLen, jbyteDeData);
+    (*env)->CallVoidMethod(env, jobj, jmethodid, outData);
+}
+
+void updateSize2Java(int width, int height, JNIEnv *env)
+{
+    jclass jclazz = (*env)->FindClass(env, "com/jesse/pineappleplayer/ffmpeg/JNIffmpegInterface");
+    jmethodID jmethodid = (*env)->GetMethodID(env, jclazz, "updateSize", "(II)V");
+    jobject jobj = (*env)->AllocObject(env, jclazz);
+    (*env)->CallVoidMethod(env, jobj, jmethodid, width, height);
 }

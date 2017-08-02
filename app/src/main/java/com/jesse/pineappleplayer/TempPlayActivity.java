@@ -1,6 +1,5 @@
 package com.jesse.pineappleplayer;
 
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 
@@ -21,7 +20,8 @@ public class TempPlayActivity extends DisplayActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_temp);
         mPlaybackView = (GLDisplayView) findViewById(R.id.playback_view);
-        Uri uri = Uri.parse("android.resource://" + getPackageName() + '/' + R.raw.vid_bigbuckbunny);
-        MediaParser.getInstance().startPlayback(this, uri, "", mPlaybackView.getSurface());
+//        Uri uri = Uri.parse("android.resource://" + getPackageName() + '/' + R.raw.vid_bigbuckbunny);
+//        MediaParser.getInstance().startPlayback(this, uri, "", mPlaybackView.getSurface());
+        MediaParser.getInstance().decodeFileByFFmpeg("", mPlaybackView, TempPlayActivity.class.getSimpleName());
     }
 }

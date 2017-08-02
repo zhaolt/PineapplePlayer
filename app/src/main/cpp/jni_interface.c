@@ -22,3 +22,10 @@ jint Java_com_jesse_pineappleplayer_ffmpeg_FFmpegInterface_decodeH264Data(JNIEnv
     (*env)->ReleaseByteArrayElements(env, outData, outBuffer, 0);
     return ret;
 }
+
+jint Java_com_jesse_pineappleplayer_ffmpeg_FFmpegInterface_decodeFile(JNIEnv *env, jobject jobj, jstring url)
+{
+    int ret = 0;
+    ret = decodeFile(env, url);
+    return ret;
+}
