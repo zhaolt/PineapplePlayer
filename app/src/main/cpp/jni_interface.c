@@ -26,6 +26,6 @@ jint Java_com_jesse_pineappleplayer_ffmpeg_FFmpegInterface_decodeH264Data(JNIEnv
 jint Java_com_jesse_pineappleplayer_ffmpeg_FFmpegInterface_decodeFile(JNIEnv *env, jobject jobj, jstring url)
 {
     int ret = 0;
-    ret = decodeFile(env, url);
+    ret = decodeFile(env, jobj, url);
     return ret;
 }

@@ -19,6 +19,8 @@
 #define LOGE(format, ...)  printf("(>_<) " format "\n", ##__VA_ARGS__)
 #define LOGI(format, ...)  printf("(^_^) " format "\n", ##__VA_ARGS__)
 #endif
+void sendData2Java(uint8_t* deData, int dataLen, JNIEnv *env, jobject jobj);
+void updateSize2Java(int width, int height, JNIEnv *env, jobject jobj);
 int initFlag = 0;
 typedef struct _VideoDec {
     AVCodecContext *pCodecCtx;
@@ -106,7 +108,8 @@ int decodeVideoData(uint8_t* srcData, int dataLen, uint8_t* outData)
 }
 
 
-int decodeFile(JNIEnv* env, jstring url) {
+int decodeFile(JNIEnv* env, jobject jobj, jstring url)
+{
     int i, videoIndex;
     int ret, got_picture;
     int frame_cnt;
@@ -120,9 +123,16 @@ int decodeFile(JNIEnv* env, jstring url) {
     VideoDec *pDec = (VideoDec*) av_mallocz(sizeof(VideoDec));
     pDec->pFormatCtx = avformat_alloc_context();
 
-    if (avformat_open_input(&pDec->pFormatCtx, input_str, NULL, NULL) != 0)
+    if (avformat_open_input(&(pDec->pFormatCtx), input_str
+                            /*"rtmp://live.hkstv.hk.lxdns.com/live/hks"*/, NULL, NULL) != 0)
     {
         LOGE("Couldn't open input stream.\n");
+        return -1;
+    }
+
+    if (avformat_find_stream_info(pDec->pFormatCtx, NULL) < 0)
+    {
+        LOGE("Couldn't find stream information\n");
         return -1;
     }
 
@@ -155,19 +165,19 @@ int decodeFile(JNIEnv* env, jstring url) {
     // int size = w * h + (w * h / 2); yuv420
     int dataLen = pDec->pCodecCtx->width * pDec->pCodecCtx->height +
                   (pDec->pCodecCtx->width * pDec->pCodecCtx->height / 2);
-    updateSize2Java(pDec->pCodecCtx->width, pDec->pCodecCtx->height, env);
+    updateSize2Java(pDec->pCodecCtx->width, pDec->pCodecCtx->height, env, jobj);
     uint8_t* deData = malloc(dataLen);
     pDec->pFrame = av_frame_alloc();
     pDec->pFrameYUV = av_frame_alloc();
     av_image_fill_arrays(pDec->pFrameYUV->data, pDec->pFrameYUV->linesize, deData,
                          AV_PIX_FMT_YUV420P, pDec->pCodecCtx->width, pDec->pCodecCtx->height, 1);
 
-    av_init_packet(&(d->packet));
+    av_init_packet(&(pDec->packet));
 
     pDec->pSwsCtx = sws_getContext(pDec->pCodecCtx->width, pDec->pCodecCtx->height,
-                                           pDec->pCodecCtx->pix_fmt, pDec->pCodecCtx->width,
-                                           pDec->pCodecCtx->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC,
-                                           NULL, NULL, NULL);
+                                   pDec->pCodecCtx->pix_fmt, pDec->pCodecCtx->width,
+                                   pDec->pCodecCtx->height, AV_PIX_FMT_YUV420P, SWS_BICUBIC,
+                                   NULL, NULL, NULL);
 
     sprintf(info,   "[Input     ]%s\n", input_str);
     sprintf(info, "%s[Format    ]%s\n",info, pDec->pFormatCtx->iformat->name);
@@ -205,7 +215,7 @@ int decodeFile(JNIEnv* env, jstring url) {
                           pDec->pFrame->width/2,
                           pDec->pFrame->height/2,
                           deData + pDec->pFrame->width * pDec->pFrame->height * 5 / 4);
-                sendData2Java(deData, dataLen, env);
+
                 switch(pDec->pFrame->pict_type){
                     case AV_PICTURE_TYPE_I:sprintf(pictype_str,"I");break;
                     case AV_PICTURE_TYPE_P:sprintf(pictype_str,"P");break;
@@ -213,6 +223,7 @@ int decodeFile(JNIEnv* env, jstring url) {
                     default:sprintf(pictype_str,"Other");break;
                 }
                 LOGI("Frame Index: %5d. Type:%s",frame_cnt,pictype_str);
+                sendData2Java(deData, dataLen, env, jobj);
                 frame_cnt++;
             }
         }
@@ -220,21 +231,20 @@ int decodeFile(JNIEnv* env, jstring url) {
     return 2;
 }
 
-void sendData2Java(uint8_t* deData, int dataLen, JNIEnv *env)
+void sendData2Java(uint8_t* deData, int dataLen, JNIEnv *env, jobject jobj)
 {
-    jclass jclazz = (*env)->FindClass(env, "com/jesse/pineappleplayer/ffmpeg/JNIffmpegInterface");
+    jclass jclazz = (*env)->GetObjectClass(env, jobj);
     jmethodID jmethodid = (*env)->GetMethodID(env, jclazz, "sendData2Java", "([B)V");
-    jobject jobj = (*env)->AllocObject(env, jclazz);
     jbyte* jbyteDeData = (jbyte*) deData;
     jbyteArray outData = (*env)->NewByteArray(env, dataLen);
     (*env)->SetByteArrayRegion(env, outData, 0, dataLen, jbyteDeData);
     (*env)->CallVoidMethod(env, jobj, jmethodid, outData);
+    (*env)->DeleteLocalRef(env, outData);
 }
 
-void updateSize2Java(int width, int height, JNIEnv *env)
+void updateSize2Java(int width, int height, JNIEnv *env, jobject jobj)
 {
-    jclass jclazz = (*env)->FindClass(env, "com/jesse/pineappleplayer/ffmpeg/JNIffmpegInterface");
-    jmethodID jmethodid = (*env)->GetMethodID(env, jclazz, "updateSize", "(II)V");
-    jobject jobj = (*env)->AllocObject(env, jclazz);
+    jclass  jclazz = (*env)->GetObjectClass(env, jobj);
+    jmethodID  jmethodid = (*env)->GetMethodID(env, jclazz, "updateSize", "(II)V");
     (*env)->CallVoidMethod(env, jobj, jmethodid, width, height);
 }

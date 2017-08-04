@@ -1,5 +1,7 @@
 package com.jesse.pineappleplayer.ffmpeg;
 
+import android.util.Log;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -9,15 +11,26 @@ import java.util.Map;
 
 public class FFmpegInterface {
 
-    private Map<String, OnFrameDecodeListener> mOnFrameDecodeGroup;
+    private static final String TAG = FFmpegInterface.class.getSimpleName();
 
+    private static Map<String, OnFrameDecodeListener> mOnFrameDecodeGroup;
+
+
+    private static FFmpegInterface instance;
 
     private FFmpegInterface() {
         mOnFrameDecodeGroup = new HashMap<>();
     }
 
-    public static class SingleTon {
-        public static final FFmpegInterface INSTANCE = new FFmpegInterface();
+    public static FFmpegInterface getInstance() {
+        if (null == instance) {
+            synchronized (FFmpegInterface.class) {
+                if (null == instance) {
+                    instance = new FFmpegInterface();
+                }
+            }
+        }
+        return instance;
     }
 
     public void addOnFrameDecodeListener(String className, OnFrameDecodeListener listener) {
@@ -33,24 +46,23 @@ public class FFmpegInterface {
         return result;
     }
 
-    public static FFmpegInterface getInstance() {
-        return SingleTon.INSTANCE;
-    }
 
     public native int initH264Decoder();
     public native int decodeH264Data(byte[] srcData, int dataLen, byte[] outData);
     public native int decodeFile(String url);
 
     public void sendData2Java(byte[] data) {
+        Log.e(TAG, "sendData2Java");
         if (null == mOnFrameDecodeGroup || mOnFrameDecodeGroup.isEmpty()) {
             return;
         }
         for (Map.Entry<String, OnFrameDecodeListener> entry : mOnFrameDecodeGroup.entrySet()) {
             entry.getValue().onFrameDecode(data);
-        }
+       }
     }
 
     public void updateSize(int w, int h) {
+        Log.e(TAG, "width: " + w + ", height: " + h);
         if (null == mOnFrameDecodeGroup || mOnFrameDecodeGroup.isEmpty()) {
             return;
         }
