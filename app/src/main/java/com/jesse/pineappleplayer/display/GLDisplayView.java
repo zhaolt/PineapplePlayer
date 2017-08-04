@@ -5,6 +5,7 @@ import android.opengl.GLSurfaceView;
 import android.util.AttributeSet;
 import android.view.Surface;
 
+import com.jesse.pineappleplayer.App;
 import com.jesse.pineappleplayer.display.yuv.GLDisplayYUVRenderer;
 
 /**
@@ -26,9 +27,10 @@ public class GLDisplayView extends GLSurfaceView {
         init();
     }
 
+
     private void init() {
         setEGLContextClientVersion(2);
-        if (false) {
+        if (App.isSupportMediaCodecDecode) {
             mTextureRenderer = new GLDisplayRenderer(this);
             setRenderer(mTextureRenderer);
         } else {

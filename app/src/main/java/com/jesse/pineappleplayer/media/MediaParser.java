@@ -105,6 +105,7 @@ public class MediaParser {
         FFmpegInterface.getInstance().addOnFrameDecodeListener(className, new FFmpegInterface.OnFrameDecodeListener() {
             @Override
             public void onFrameDecode(byte[] data) {
+                Log.e(TAG, getHexArrayString(data));
                 displayView.pushYUVData(data);
             }
 
@@ -114,6 +115,7 @@ public class MediaParser {
             }
         });
         int result = FFmpegInterface.getInstance().decodeFile(url);
+        Log.e(TAG, "result : " + result);
         switch (result) {
             case -1:
                 Log.e(TAG, "decode error");
@@ -127,6 +129,21 @@ public class MediaParser {
                 Log.i(TAG, "decoding...");
                 break;
         }
+    }
+
+    public static String getHexArrayString(byte[] data) {
+        StringBuffer sb = new StringBuffer();
+        for (int j = 0; j < data.length; j++) {
+            String hexStr = Integer.toHexString(data[j]);
+            sb.append("0x");
+            sb.append(hexStr.length() >= 2 ? hexStr.substring(hexStr.length() - 2) : hexStr);
+            sb.append(",");
+        }
+        if (sb.length() > 0) {
+            sb.insert(0, "[");
+            sb.replace(sb.lastIndexOf(","), sb.length(), "]");
+        }
+        return sb.toString();
     }
 
 
