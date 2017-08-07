@@ -1,8 +1,17 @@
 package com.jesse.pineappleplayer.display;
 
 import android.graphics.SurfaceTexture;
+import android.net.Uri;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.os.Environment;
+import android.os.Handler;
+import android.view.Surface;
+
+import com.jesse.pineappleplayer.R;
+import com.jesse.pineappleplayer.media.MediaParser;
+
+import java.io.File;
 
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
@@ -30,6 +39,13 @@ public class GLDisplayRenderer implements GLSurfaceView.Renderer {
         textureID = mFullFrameRect.createTextureObj();
         mSurfaceTexture = new SurfaceTexture(textureID);
         mSurfaceTexture.setOnFrameAvailableListener(onFrameAvailableListener);
+        new Handler(mGLSurfaceView.getContext().getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                Uri uri = Uri.parse("android.resource://" + mGLSurfaceView.getContext().getPackageName() + '/' + R.raw.vid_bigbuckbunny);
+                MediaParser.getInstance().startPlayback(mGLSurfaceView.getContext(), uri, Environment.getExternalStorageDirectory().getAbsolutePath() + File.separator + "b.mp4", new Surface(mSurfaceTexture));
+            }
+        });
     }
 
     public SurfaceTexture getSurfaceTexture() {

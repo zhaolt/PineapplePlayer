@@ -25,7 +25,7 @@ public class MediaParser {
     private MediaExtractor mMediaExtractor;
 
     // MediaCodec包装类 核心解码器
-    private MediaCodecWrapper mCodecWrapper;
+    private VideoCodecWrapper mCodecWrapper;
 
     private TimeAnimator mTimeAnimator = new TimeAnimator();
 
@@ -42,6 +42,7 @@ public class MediaParser {
     }
 
     public void startPlayback(Context context, Uri uri, String url, Surface surface) {
+        MediaParser2 parser2 = new MediaParser2(url);
         try {
             mMediaExtractor.setDataSource(context, uri, null);
             int nTracks = mMediaExtractor.getTrackCount();
@@ -49,10 +50,8 @@ public class MediaParser {
             for (int i = 0; i < nTracks; ++i) {
                 mMediaExtractor.unselectTrack(i);
             }
-
-
             for (int i = 0; i < nTracks; ++i) {
-                mCodecWrapper = MediaCodecWrapper.fromVideoFormat(mMediaExtractor.getTrackFormat(i),
+                mCodecWrapper = VideoCodecWrapper.fromVideoFormat(mMediaExtractor.getTrackFormat(i),
                         surface);
                 if (mCodecWrapper != null) {
                     mMediaExtractor.selectTrack(i);
@@ -64,7 +63,7 @@ public class MediaParser {
                 public void onTimeUpdate(final TimeAnimator animation,
                                          final long totalTime,
                                          final long deltaTime) {
-
+                    Log.e(TAG, "animation->totalTime: " + totalTime + ", deltaTime: " + deltaTime);
                     boolean isEos = ((mMediaExtractor.getSampleFlags() & MediaCodec
                             .BUFFER_FLAG_END_OF_STREAM) == MediaCodec.BUFFER_FLAG_END_OF_STREAM);
 

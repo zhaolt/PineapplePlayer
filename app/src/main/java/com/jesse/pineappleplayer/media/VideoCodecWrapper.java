@@ -28,19 +28,19 @@ import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
 import java.util.Queue;
 
-public class MediaCodecWrapper {
+public class VideoCodecWrapper {
 
     private Handler mHandler;
 
 
     public interface OutputFormatChangedListener {
-        void outputFormatChanged(MediaCodecWrapper sender, MediaFormat newFormat);
+        void outputFormatChanged(VideoCodecWrapper sender, MediaFormat newFormat);
     }
 
     private OutputFormatChangedListener mOutputFormatChangedListener = null;
 
     public interface OutputSampleListener {
-        void outputSample(MediaCodecWrapper sender, MediaCodec.BufferInfo info, ByteBuffer buffer);
+        void outputSample(VideoCodecWrapper sender, MediaCodec.BufferInfo info, ByteBuffer buffer);
     }
 
     private MediaCodec mDecoder;
@@ -56,7 +56,7 @@ public class MediaCodecWrapper {
 
     private OutputSampleListener mOutputSampleListener;
 
-    private MediaCodecWrapper(MediaCodec codec) {
+    private VideoCodecWrapper(MediaCodec codec) {
         mDecoder = codec;
         codec.start();
         mInputBuffers = codec.getInputBuffers();
@@ -93,9 +93,9 @@ public class MediaCodecWrapper {
         }
     }
 
-    public static MediaCodecWrapper fromVideoFormat(final MediaFormat trackFormat,
-            Surface surface) throws IOException {
-        MediaCodecWrapper result = null;
+    public static VideoCodecWrapper fromVideoFormat(final MediaFormat trackFormat,
+                                                    Surface surface) throws IOException {
+        VideoCodecWrapper result = null;
         MediaCodec videoCodec = null;
 
 
@@ -107,7 +107,7 @@ public class MediaCodecWrapper {
         }
 
         if (videoCodec != null) {
-            result = new MediaCodecWrapper(videoCodec);
+            result = new VideoCodecWrapper(videoCodec);
         }
 
 
@@ -232,7 +232,7 @@ public class MediaCodecWrapper {
                             @Override
                             public void run() {
                                 mOutputFormatChangedListener
-                                        .outputFormatChanged(MediaCodecWrapper.this,
+                                        .outputFormatChanged(VideoCodecWrapper.this,
                                                 mDecoder.getOutputFormat());
 
                             }
